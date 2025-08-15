@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import CameraCapture from './CameraCapture'
 
-const ProductForm = ({ onAddProduct, existingProducts }) => {
+const ProductForm = ({ onAddProduct, existingProducts, categories, onAddCategory, onRemoveCategory }) => {
   // ========================================
   // FORM STATE MANAGEMENT
   // ========================================
@@ -77,6 +77,24 @@ const ProductForm = ({ onAddProduct, existingProducts }) => {
     setShowCamera(false)
   }
 
+  const handleAddCategory = () => {
+    if (newCategory.trim() && !categories.includes(newCategory.trim())) {
+      onAddCategory(newCategory.trim())
+      setFormData(prev => ({ ...prev, category: newCategory.trim() }))
+      setNewCategory('')
+      setShowAddCategory(false)
+    }
+  }
+
+  const handleRemoveCategory = (categoryToRemove) => {
+    if (categories.length > 1) {
+      onRemoveCategory(categoryToRemove)
+      if (formData.category === categoryToRemove) {
+        setFormData(prev => ({ ...prev, category: '' }))
+      }
+    }
+  }
+
   // ========================================
   // FORM SUBMISSION HANDLER
   // ========================================
@@ -142,17 +160,8 @@ const ProductForm = ({ onAddProduct, existingProducts }) => {
     }
   }
 
-  const categories = [
-    'Electronics',
-    'Clothing',
-    'Home & Garden',
-    'Sports & Outdoors',
-    'Books',
-    'Automotive',
-    'Health & Beauty',
-    'Toys & Games',
-    'Other'
-  ]
+  const [newCategory, setNewCategory] = useState('')
+  const [showAddCategory, setShowAddCategory] = useState(false)
 
   return (
     <div className="card">
@@ -193,19 +202,64 @@ const ProductForm = ({ onAddProduct, existingProducts }) => {
           <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
             Category *
           </label>
-          <select
-            id="category"
-            name="category"
-            value={formData.category}
-            onChange={handleInputChange}
-            className="input-field"
-            required
-          >
-            <option value="">Select a category</option>
-            {categories.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
+          <div className="space-y-2">
+            <select
+              id="category"
+              name="category"
+              value={formData.category}
+              onChange={handleInputChange}
+              className="input-field"
+              required
+            >
+              <option value="">Select a category</option>
+              {categories.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+            
+            <div className="flex space-x-2">
+              <button
+                type="button"
+                onClick={() => setShowAddCategory(!showAddCategory)}
+                className="btn-secondary text-sm px-3 py-2"
+              >
+                {showAddCategory ? 'Cancel' : 'Add Category'}
+              </button>
+              
+              {formData.category && categories.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => handleRemoveCategory(formData.category)}
+                  className="btn-secondary text-sm px-3 py-2 bg-red-100 text-red-700 hover:bg-red-200"
+                >
+                  Remove Category
+                </button>
+              )}
+            </div>
+            
+            {showAddCategory && (
+              <div className="p-3 bg-gray-50 rounded-lg border">
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    placeholder="Enter new category name"
+                    className="input-field flex-1"
+                    onKeyPress={(e) => e.key === 'Enter' && handleAddCategory()}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCategory}
+                    disabled={!newCategory.trim()}
+                    className="btn-primary text-sm px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <div>

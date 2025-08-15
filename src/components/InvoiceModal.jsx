@@ -13,9 +13,6 @@ const InvoiceModal = ({ invoice, onClose }) => {
   // - Invoice numbering system with database sequence
   
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
-  const [quantity, setQuantity] = useState(invoice.quantity)
-
-  const total = quantity * invoice.product.unitPrice
 
   // ========================================
   // PDF GENERATION FUNCTION
@@ -129,7 +126,10 @@ const InvoiceModal = ({ invoice, onClose }) => {
               </div>
               <div>
                 <h3 className="font-semibold text-gray-800 mb-2">Customer Information</h3>
-                <p className="text-gray-600">Name: {invoice.customerName}</p>
+                <p className="text-gray-600">Name: {invoice.customer?.name || invoice.customerName}</p>
+                {invoice.customer?.email && <p className="text-gray-600">Email: {invoice.customer.email}</p>}
+                {invoice.customer?.phone && <p className="text-gray-600">Phone: {invoice.customer.phone}</p>}
+                {invoice.customer?.address && <p className="text-gray-600">Address: {invoice.customer.address}</p>}
               </div>
             </div>
 
@@ -146,36 +146,61 @@ const InvoiceModal = ({ invoice, onClose }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td className="border border-gray-300 px-4 py-2">
-                      <div className="flex items-center space-x-3">
-                        {invoice.product.image && (
-                          <img
-                            src={invoice.product.image}
-                            alt={invoice.product.name}
-                            className="w-12 h-12 object-cover rounded border"
-                          />
-                        )}
-                        <span className="font-medium">{invoice.product.name}</span>
-                      </div>
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2">{invoice.product.category}</td>
-                    <td className="border border-gray-300 px-4 py-2 text-center">
-                      <input
-                        type="number"
-                        value={quantity}
-                        onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                        min="1"
-                        className="w-20 text-center border border-gray-300 rounded px-2 py-1"
-                      />
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2 text-right">
-                      ${invoice.product.unitPrice.toFixed(2)}
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2 text-right font-semibold">
-                      ${total.toFixed(2)}
-                    </td>
-                  </tr>
+                  {invoice.products ? (
+                    // New invoice structure with multiple products
+                    invoice.products.map((item, index) => (
+                      <tr key={index}>
+                        <td className="border border-gray-300 px-4 py-2">
+                          <div className="flex items-center space-x-3">
+                            {item.product.image && (
+                              <img
+                                src={item.product.image}
+                                alt={item.product.name}
+                                className="w-12 h-12 object-cover rounded border"
+                              />
+                            )}
+                            <span className="font-medium">{item.product.name}</span>
+                          </div>
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2">{item.product.category}</td>
+                        <td className="border border-gray-300 px-4 py-2 text-center">
+                          {item.quantity}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2 text-right">
+                          ${item.unitPrice.toFixed(2)}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2 text-right font-semibold">
+                          ${item.total.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    // Legacy invoice structure with single product
+                    <tr>
+                      <td className="border border-gray-300 px-4 py-2">
+                        <div className="flex items-center space-x-3">
+                          {invoice.product.image && (
+                            <img
+                              src={invoice.product.image}
+                              alt={invoice.product.name}
+                              className="w-12 h-12 object-cover rounded border"
+                            />
+                          )}
+                          <span className="font-medium">{invoice.product.name}</span>
+                        </div>
+                      </td>
+                      <td className="border border-gray-300 px-4 py-2">{invoice.product.category}</td>
+                      <td className="border border-gray-300 px-4 py-2 text-center">
+                        {invoice.quantity || 1}
+                      </td>
+                      <td className="border border-gray-300 px-4 py-2 text-right">
+                        ${invoice.product.unitPrice.toFixed(2)}
+                      </td>
+                      <td className="border border-gray-300 px-4 py-2 text-right font-semibold">
+                        ${((invoice.quantity || 1) * invoice.product.unitPrice).toFixed(2)}
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -183,11 +208,35 @@ const InvoiceModal = ({ invoice, onClose }) => {
             {/* Total */}
             <div className="text-right">
               <div className="inline-block border-t-2 border-gray-300 pt-4">
-                <p className="text-xl font-bold text-gray-800">
-                  Total: ${total.toFixed(2)}
-                </p>
+                {invoice.products ? (
+                  // New invoice structure with tax breakdown
+                  <div className="space-y-2">
+                    <div className="text-sm text-gray-600">
+                      Subtotal: ${invoice.subtotal.toFixed(2)}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Tax (10%): ${invoice.tax.toFixed(2)}
+                    </div>
+                    <div className="text-xl font-bold text-gray-800">
+                      Total: ${invoice.total.toFixed(2)}
+                    </div>
+                  </div>
+                ) : (
+                  // Legacy invoice structure
+                  <p className="text-xl font-bold text-gray-800">
+                    Total: ${((invoice.quantity || 1) * invoice.product.unitPrice).toFixed(2)}
+                  </p>
+                )}
               </div>
             </div>
+
+            {/* Notes */}
+            {invoice.notes && (
+              <div className="mt-8 p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-semibold text-gray-800 mb-2">Notes:</h4>
+                <p className="text-gray-600">{invoice.notes}</p>
+              </div>
+            )}
 
             {/* Footer */}
             <div className="mt-12 text-center text-gray-500 text-sm">
@@ -219,3 +268,4 @@ const InvoiceModal = ({ invoice, onClose }) => {
 }
 
 export default InvoiceModal
+

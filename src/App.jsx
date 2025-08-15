@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Toaster, toast } from 'react-hot-toast'
 import ProductForm from './components/ProductForm'
 import ProductList from './components/ProductList'
+import InvoiceForm from './components/InvoiceForm'
 import InvoiceModal from './components/InvoiceModal'
 import Header from './components/Header'
 
@@ -9,6 +10,17 @@ function App() {
   const [products, setProducts] = useState([])
   const [showInvoice, setShowInvoice] = useState(false)
   const [currentInvoice, setCurrentInvoice] = useState(null)
+  const [categories, setCategories] = useState([
+    'Electronics',
+    'Clothing',
+    'Home & Garden',
+    'Sports & Outdoors',
+    'Books',
+    'Automotive',
+    'Health & Beauty',
+    'Toys & Games',
+    'Other'
+  ])
 
   // ========================================
   // DATABASE INTEGRATION POINT - START
@@ -150,6 +162,34 @@ function App() {
   }
 
   // ========================================
+  // CATEGORY MANAGEMENT FUNCTIONS
+  // ========================================
+  
+  const addCategory = (newCategory) => {
+    if (newCategory.trim() && !categories.includes(newCategory.trim())) {
+      setCategories(prev => [...prev, newCategory.trim()])
+      toast.success(`Category "${newCategory.trim()}" added successfully!`)
+    }
+  }
+
+  const removeCategory = (categoryToRemove) => {
+    if (categories.length > 1) {
+      // Check if category is used by any products
+      const productsUsingCategory = products.filter(p => p.category === categoryToRemove)
+      
+      if (productsUsingCategory.length > 0) {
+        toast.error(`Cannot remove category "${categoryToRemove}" - it's used by ${productsUsingCategory.length} product(s)`)
+        return
+      }
+      
+      setCategories(prev => prev.filter(cat => cat !== categoryToRemove))
+      toast.success(`Category "${categoryToRemove}" removed successfully!`)
+    } else {
+      toast.error('Cannot remove the last category')
+    }
+  }
+
+  // ========================================
   // INVOICE GENERATION FUNCTION
   // ========================================
   
@@ -197,11 +237,28 @@ function App() {
       <Header />
       
       <main className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div>
-            <ProductForm onAddProduct={addProduct} existingProducts={products} />
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          {/* Product Management Section */}
+          <div className="xl:col-span-1">
+            <ProductForm 
+              onAddProduct={addProduct} 
+              existingProducts={products}
+              categories={categories}
+              onAddCategory={addCategory}
+              onRemoveCategory={removeCategory}
+            />
           </div>
-          <div>
+          
+          {/* Invoice Creation Section */}
+          <div className="xl:col-span-1">
+            <InvoiceForm 
+              products={products}
+              onGenerateInvoice={generateInvoice}
+            />
+          </div>
+          
+          {/* Product List Section */}
+          <div className="xl:col-span-1">
             <ProductList 
               products={products} 
               onDeleteProduct={deleteProduct}
