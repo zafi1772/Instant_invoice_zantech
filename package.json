@@ -2,11 +2,13 @@
   "name": "zantech-instant-order",
   "version": "1.0.0",
   "description": "A web application for managing sold product information with invoice generation",
+  "homepage": "https://zafi1772.github.io/Instant_invoice_zantech",
   "main": "index.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "npm run build && git add dist -f && git commit -m 'deploy' && git subtree push --prefix dist origin gh-pages"
   },
   "dependencies": {
     "react": "^18.2.0",
